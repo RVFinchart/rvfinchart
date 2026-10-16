@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RVfinchart — Indian Stock Market</title>
+<style>
+:root{--bg:#0b1220;--panel:#111b2e;--panel2:#162238;--line:#24334c;--text:#e7eef9;--muted:#91a3bd;--green:#22c78a;--red:#ff6377;--blue:#69a7ff;--gold:#f3c969}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px Inter,Segoe UI,Arial,sans-serif}
+header{height:66px;display:flex;align-items:center;gap:18px;padding:0 22px;border-bottom:1px solid var(--line);background:#0d1627;position:sticky;top:0;z-index:5}
+.logo{font-size:22px;font-weight:800;letter-spacing:.3px;white-space:nowrap}.logo span{color:var(--blue)}.pill{border:1px solid #345071;color:#b6d3ff;padding:5px 9px;border-radius:7px;font-size:11px}
+.search{flex:1;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--text);outline:none}
+.topright{margin-left:auto;color:var(--muted);font-size:12px}
+.layout{display:grid;grid-template-columns:225px minmax(350px,1fr) 285px;gap:12px;padding:14px;max-width:1700px;margin:auto}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+.panelhead{padding:14px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;font-weight:700}
+.small{color:var(--muted);font-size:11px;font-weight:500}
+.marketstrip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.metric{padding:13px 15px;background:var(--panel);border:1px solid var(--line);border-radius:11px}.metric .label{color:var(--muted);font-size:12px}.metric .value{font-size:21px;font-weight:750;margin:7px 0 4px}.positive{color:var(--green)}.negative{color:var(--red)}
+.stocklist{padding:4px 0}.stock{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 13px;border-bottom:1px solid #1c2a40;cursor:pointer}.stock:hover,.stock.active{background:#1b2c46}.symbol{font-weight:700}.company{font-size:11px;color:var(--muted);margin-top:4px}.price{text-align:right;font-weight:650}.change{text-align:right;font-size:11px;margin-top:4px}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--line);align-items:center}.btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px}.btn:hover,.btn.active{border-color:var(--blue);color:#b9d7ff;background:#1b3150}
+.charttitle{padding:14px 15px 6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.charttitle strong{font-size:18px}.chartprice{font-size:20px;font-weight:750}.subline{font-size:12px;color:var(--muted);padding:0 15px 8px}
+#chart{width:100%;height:340px;display:block;background:#0e1728} .chartlegend{display:flex;gap:14px;flex-wrap:wrap;padding:8px 14px;color:var(--muted);font-size:11px}
+.lower{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.mini{padding:14px}.mini h3{margin:0 0 12px;font-size:14px}.barrow{display:grid;grid-template-columns:90px 1fr 45px;gap:8px;align-items:center;margin:11px 0;font-size:12px}.bar{height:7px;background:#263752;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue);border-radius:9px}
+.screener-controls{padding:12px;display:flex;gap:7px;flex-wrap:wrap}.screener-controls select,.screener-controls input{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:8px;min-width:100px}
+table{border-collapse:collapse;width:100%;font-size:12px}th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted);font-weight:600;background:#121e32}tbody tr{cursor:pointer}tbody tr:hover{background:#1b2c46}
+.notice{margin:0 14px 14px;padding:10px 13px;border-radius:8px;background:#2a2518;color:#ead6a0;border:1px solid #51462b;font-size:12px}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:16px}
+@media(max-width:1100px){.layout{grid-template-columns:210px minmax(0,1fr)}.rightcol{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px}.rightcol .panel{height:max-content}}
+@media(max-width:700px){header{padding:0 12px;gap:10px}.logo{font-size:18px}.topright{display:none}.search{min-width:80px}.layout{display:flex;flex-direction:column;padding:8px}.marketstrip{gap:6px}.metric{padding:10px}.metric .value{font-size:16px}.leftcol{order:2}.centercol{order:1}.rightcol{order:3;display:flex;flex-direction:column}#chart{height:290px}.lower{grid-template-columns:1fr}.stocklist{display:grid;grid-template-columns:1fr 1fr}.stock{padding:9px}.notice{margin:0 8px 10px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">RV<span>finchart</span></div><span class="pill">DEMO • SAMPLE DATA</span>
+  <input class="search" id="search" placeholder="⌕  Search stocks (e.g. RELIANCE, TCS)" aria-label="Search stocks">
+  <div class="topright">INDIA · NSE / BSE</div>
+</header>
+<div class="layout">
+  <aside class="panel leftcol">
+    <div class="panelhead">Watchlist <span class="small" id="watchCount">8 symbols</span></div>
+    <div class="stocklist" id="watchlist"></div>
+  </aside>
+  <main class="centercol">
+    <div class="marketstrip">
+      <div class="metric"><div class="label">NIFTY 50 · DEMO</div><div class="value positive">24,812.40</div><div class="positive">▲ 0.62% today</div></div>
+      <div class="metric"><div class="label">SENSEX · DEMO</div><div class="value positive">81,340.15</div><div class="positive">▲ 0.48% today</div></div>
+      <div class="metric"><div class="label">BANK NIFTY · DEMO</div><div class="value negative">52,106.80</div><div class="negative">▼ 0.21% today</div></div>
+    </div>
+    <section class="panel">
+      <div class="charttitle"><strong id="selectedName">RELIANCE</strong><span class="pill">NSE</span><span class="small" id="companyName">Reliance Industries</span><span style="flex:1"></span><span class="chartprice" id="selectedPrice">₹1,428.50</span></div>
+      <div class="subline" id="selectedChange">+1.24% · Sample price, not live market data</div>
+      <div class="toolbar">
+        <button class="btn active" data-tf="1D">1D</button><button class="btn" data-tf="1W">1W</button><button class="btn" data-tf="1M">1M</button><button class="btn" data-tf="3M">3M</button><button class="btn" data-tf="1Y">1Y</button>
+        <span style="flex:1"></span><button class="btn" id="maBtn">✓ MA 20</button><button class="btn" id="volBtn">✓ Volume</button>
+      </div>
+      <canvas id="chart" aria-label="Sample candlestick stock chart"></canvas>
+      <div class="chartlegend"><span>▰ <span style="color:var(--green)">Bullish candle</span></span><span>▰ <span style="color:var(--red)">Bearish candle</span></span><span id="maLegend">— MA 20</span><span>— Volume</span></div>
+    </section>
+    <div class="lower">
+      <section class="panel mini"><h3>Technical Snapshot</h3><div class="barrow"><span>RSI (14)</span><div class="bar"><i id="rsiBar" style="width:57%"></i></div><b id="rsiValue">57.2</b></div><div class="barrow"><span>Trend</span><div class="bar"><i id="trendBar" style="width:68%"></i></div><b class="positive" id="trendValue">Bullish</b></div><div class="small">Illustrative indicator values for demonstration only.</div></section>
+      <section class="panel mini"><h3>Key Levels</h3><div class="barrow"><span>Resistance</span><div class="bar"><i style="width:84%;background:var(--red)"></i></div><b id="resistance">₹1,465</b></div><div class="barrow"><span>Last price</span><div class="bar"><i style="width:64%;background:var(--blue)"></i></div><b id="levelPrice">₹1,428</b></div><div class="barrow"><span>Support</span><div class="bar"><i style="width:43%;background:var(--green)"></i></div><b id="support">₹1,390</b></div></section>
+    </div>
+  </main>
+  <aside class="rightcol">
+    <section class="panel">
+      <div class="panelhead">Stock Screener <span class="small">DEMO</span></div>
+      <div class="screener-controls">
+        <select id="filterChange"><option value="all">All changes</option><option value="positive">Positive only</option><option value="negative">Negative only</option></select>
+        <select id="filterPrice"><option value="all">Any price</option><option value="500">Under ₹500</option><option value="1000">Under ₹1,000</option></select>
+        <button class="btn active" id="applyFilters">Apply</button>
+      </div>
+      <div style="overflow:auto"><table><thead><tr><th>Symbol</th><th>Price</th><th>Change</th></tr></thead><tbody id="screenerBody"></tbody></table></div>
+    </section>
+    <section class="panel">
+      <div class="panelhead">Market Movers <span class="small">Sample</span></div>
+      <div class="stocklist" id="movers"></div>
+    </section>
+  </aside>
+</div>
+<div class="notice">⚠ DEMO MODE: All prices, index values, candles, RSI and technical levels on this page are fictional sample data. They are not live NSE/BSE quotes and must not be used for trading decisions.</div>
+<footer>RVfinchart · Educational demo · Independent project, not affiliated with TradingView · Data shown is fictional</footer>
+<script>
+const stocks=[
+{symbol:"RELIANCE",name:"Reliance Industries",price:1428.50,change:1.24,base:1428.5,rsi:57.2},
+{symbol:"TCS",name:"Tata Consultancy Services",price:3982.20,change:-0.42,base:3982.2,rsi:48.5},
+{symbol:"HDFCBANK",name:"HDFC Bank",price:1764.80,change:0.76,base:1764.8,rsi:61.3},
+{symbol:"INFY",name:"Infosys",price:1512.65,change:1.83,base:1512.65,rsi:64.8},
+{symbol:"ICICIBANK",name:"ICICI Bank",price:1284.30,change:0.32,base:1284.3,rsi:53.4},
+{symbol:"TATAMOTORS",name:"Tata Motors",price:684.15,change:-1.16,base:684.15,rsi:42.1},
+{symbol:"SBIN",name:"State Bank of India",price:812.40,change:2.12,base:812.4,rsi:67.2},
+{symbol:"ITC",name:"ITC Limited",price:431.90,change:-0.28,base:431.9,rsi:49.7},
+{symbol:"ADANIPOWER",name:"Adani Power",price:588.60,change:1.05,base:588.6,rsi:59.1},
+{symbol:"SJVN",name:"SJVN Limited",price:104.25,change:0.91,base:104.25,rsi:55.6},
+{symbol:"PCJEWELLER",name:"PC Jeweller",price:13.20,change:-0.75,base:13.2,rsi:44.2}
+];
+let selected="RELIANCE", timeframe="1D", showMA=true, showVol=true;
+const money=n=>"₹"+n.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const pct=n=>(n>=0?"+":"")+n.toFixed(2)+"%";
+function selectStock(sym){selected=sym;renderWatch();renderChart();renderScreener();renderMovers();}
+function renderWatch(){
+ const q=document.getElementById("search").value.toUpperCase().trim();
+ const list=stocks.filter(s=>!q||s.symbol.includes(q)||s.name.toUpperCase().includes(q));
+ document.getElementById("watchCount").textContent=list.length+" symbols";
+ document.getElementById("watchlist").innerHTML=list.slice(0,9).map(s=>`<div class="stock ${s.symbol===selected?'active':''}" data-symbol="${s.symbol}"><div><div class="symbol">${s.symbol}</div><div class="company">${s.name}</div></div><div><div class="price">${money(s.price)}</div><div class="change ${s.change>=0?'positive':'negative'}">${pct(s.change)}</div></div></div>`).join("")||'<div class="stock">No matching stock</div>';
+ document.querySelectorAll("#watchlist [data-symbol]").forEach(el=>el.onclick=()=>selectStock(el.dataset.symbol));
+}
+function renderScreener(){
+ const cf=document.getElementById("filterChange").value, pf=document.getElementById("filterPrice").value;
+ const list=stocks.filter(s=>(cf==="all"||(cf==="positive"&&s.change>0)||(cf==="negative"&&s.change<0))&&(pf==="all"||s.price<Number(pf)));
+ document.getElementById("screenerBody").innerHTML=list.map(s=>`<tr data-symbol="${s.symbol}"><td><b>${s.symbol}</b></td><td>${money(s.price)}</td><td class="${s.change>=0?'positive':'negative'}">${pct(s.change)}</td></tr>`).join("");
+ document.querySelectorAll("#screenerBody tr").forEach(el=>el.onclick=()=>selectStock(el.dataset.symbol));
+}
+function renderMovers(){
+ const list=[...stocks].sort((a,b)=>b.change-a.change).slice(0,4);
+ document.getElementById("movers").innerHTML=list.map(s=>`<div class="stock" data-symbol="${s.symbol}"><div><div class="symbol">${s.symbol}</div><div class="company">${s.name}</div></div><div><div class="price ${s.change>=0?'positive':'negative'}">${pct(s.change)}</div></div></div>`).join("");
+ document.querySelectorAll("#movers [data-symbol]").forEach(el=>el.onclick=()=>selectStock(el.dataset.symbol));
+}
+function renderChart(){
+ const s=stocks.find(x=>x.symbol===selected)||stocks[0];
+ document.getElementById("selectedName").textContent=s.symbol;document.getElementById("companyName").textContent=s.name;
+ document.getElementById("selectedPrice").textContent=money(s.price);
+ document.getElementById("selectedChange").innerHTML=`<span class="${s.change>=0?'positive':'negative'}">${pct(s.change)}</span> · ${timeframe} · Sample price, not live market data`;
+ document.getElementById("rsiValue").textContent=s.rsi.toFixed(1);document.getElementById("rsiBar").style.width=s.rsi+"%";
+ document.getElementById("trendValue").textContent=s.change>=0?"Bullish":"Bearish";document.getElementById("trendValue").className=s.change>=0?"positive":"negative";
+ document.getElementById("trendBar").style.width=(s.change>=0?68:35)+"%";
+ document.getElementById("resistance").textContent=money(s.price*1.026);document.getElementById("support").textContent=money(s.price*.973);document.getElementById("levelPrice").textContent=money(s.price);
+ drawCandles(s);
+}
+function drawCandles(s){
+ const canvas=document.getElementById("chart"), dpr=window.devicePixelRatio||1, rect=canvas.getBoundingClientRect();
+ canvas.width=Math.max(300,rect.width*dpr);canvas.height=Math.max(240,rect.height*dpr);
+ const ctx=canvas.getContext("2d");ctx.scale(dpr,dpr);const w=rect.width,h=rect.height;
+ ctx.fillStyle="#0e1728";ctx.fillRect(0,0,w,h);
+ const left=12,right=58,top=18,bottom=showVol?65:28,cw=w-left-right,ch=h-top-bottom;
+ ctx.strokeStyle="#233149";ctx.lineWidth=1;ctx.fillStyle="#7f91ac";ctx.font="10px Arial";
+ for(let i=0;i<=5;i++){let y=top+ch*i/5;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right+3,y);ctx.stroke();let val=s.price*(1.055-i*.022);ctx.fillText(val.toFixed(0),w-right+8,y+3);}
+ let n=timeframe==="1D"?42:timeframe==="1W"?36:timeframe==="1M"?32:timeframe==="3M"?28:26;
+ let seed=s.symbol.split("").reduce((a,c)=>a+c.charCodeAt(0),0)+(timeframe.length*17);
+ function rand(){seed=(seed*9301+49297)%233280;return seed/233280;}
+ let values=[],prev=s.price*.97;
+ for(let i=0;i<n;i++){let o=prev,delta=(rand()-.46)*s.price*.018,c=o+delta,hi=Math.max(o,c)+rand()*s.price*.009,lo=Math.min(o,c)-rand()*s.price*.009;values.push({o,c,hi,lo,v:rand()});prev=c;}
+ let min=Math.min(...values.map(v=>v.lo)),max=Math.max(...values.map(v=>v.hi)),range=max-min||1;
+ const y=v=>top+(max-v)/range*ch, step=cw/n,body=Math.max(3,step*.56);
+ values.forEach((v,i)=>{let x=left+i*step+step/2,col=v.c>=v.o?"#22c78a":"#ff6377";ctx.strokeStyle=col;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x,y(v.hi));ctx.lineTo(x,y(v.lo));ctx.stroke();ctx.fillStyle=col;let yy=y(Math.max(v.o,v.c)),hh=Math.max(2,Math.abs(y(v.o)-y(v.c)));ctx.fillRect(x-body/2,yy,body,hh);});
+ if(showMA){ctx.beginPath();ctx.strokeStyle="#69a7ff";ctx.lineWidth=1.6;values.forEach((v,i)=>{let avg=values.slice(Math.max(0,i-19),i+1).reduce((a,b)=>a+(b.o+b.c)/2,0)/Math.min(i+1,20),x=left+i*step+step/2;if(i===0)ctx.moveTo(x,y(avg));else ctx.lineTo(x,y(avg));});ctx.stroke();}
+ if(showVol){let vh=42,base=h-12;values.forEach((v,i)=>{let x=left+i*step+step/2;ctx.fillStyle=v.c>=v.o?"#1d866b88":"#a6405088";ctx.fillRect(x-body/2,base-v.v*vh,body,v.v*vh);});ctx.fillStyle="#8294ad";ctx.fillText("VOLUME",left, h-48);}
+ ctx.fillStyle="#91a3bd";ctx.fillText("← "+timeframe+" sample candles →",left,h-3);
+}
+document.getElementById("search").addEventListener("input",renderWatch);
+document.getElementById("applyFilters").onclick=renderScreener;
+document.querySelectorAll("[data-tf]").forEach(b=>b.onclick=()=>{timeframe=b.dataset.tf;document.querySelectorAll("[data-tf]").forEach(x=>x.classList.toggle("active",x===b));renderChart();});
+document.getElementById("maBtn").onclick=()=>{showMA=!showMA;document.getElementById("maBtn").classList.toggle("active",showMA);document.getElementById("maBtn").textContent=(showMA?"✓ ":"")+"MA 20";document.getElementById("maLegend").style.display=showMA?"":"none";renderChart();};
+document.getElementById("volBtn").onclick=()=>{showVol=!showVol;document.getElementById("volBtn").classList.toggle("active",showVol);document.getElementById("volBtn").textContent=(showVol?"✓ ":"")+"Volume";renderChart();};
+window.addEventListener("resize",renderChart);
+renderWatch();renderScreener();renderMovers();renderChart();
+</script>
+</body>
+</html>
